@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notes — Sign In</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/stylesAuth.css">
+  
+</head>
+<body>
+
+<div class="wrapper">
+
+  <!-- Brand -->
+  <div class="brand">
+    <div class="brand-icon"><i class="ti ti-notebook"></i></div>
+    <span class="brand-name">Notes</span>
+  </div>
+
+  <!-- Card -->
+  <div class="card">
+
+    <!-- Tab switcher -->
+    <div class="tab-row">
+      <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">Sign in</button>
+      <button class="tab-btn" id="tab-signup" onclick="switchTab('signup')">Create account</button>
+    </div>
+
+    <!-- ── LOGIN PANEL ── -->
+    <div class="panel active" id="panel-login">
+      <div class="form-title">Welcome back</div>
+      <div class="form-subtitle">Sign in to access your notes</div>
+
+      <div class="msg error" id="login-error"><i class="ti ti-alert-circle"></i><span id="login-error-text"></span></div>
+      <div class="msg success" id="login-success"><i class="ti ti-circle-check"></i><span id="login-success-text"></span></div>
+
+      <div class="form-group">
+        <label class="form-label" for="login-email">Email</label>
+        <div class="input-wrap">
+          <input type="email" id="login-email" placeholder="you@example.com" autocomplete="email" />
+          <i class="ti ti-mail input-icon"></i>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="login-password">Password</label>
+        <div class="input-wrap">
+          <input type="password" id="login-password" placeholder="Your password" class="has-toggle" autocomplete="current-password" />
+          <i class="ti ti-lock input-icon"></i>
+          <button class="pw-toggle" type="button" onclick="togglePw('login-password', this)" tabindex="-1">
+            <i class="ti ti-eye-off"></i>
+          </button>
+        </div>
+      </div>
+
+      <button class="submit-btn" id="login-btn" onclick="handleLogin()">
+        <i class="ti ti-login"></i> Sign in
+      </button>
+    </div>
+
+    <!-- ── SIGNUP PANEL ── -->
+    <div class="panel" id="panel-signup">
+      <div class="form-title">Create an account</div>
+      <div class="form-subtitle">Start writing. Your notes are waiting.</div>
+
+      <div class="msg error" id="signup-error"><i class="ti ti-alert-circle"></i><span id="signup-error-text"></span></div>
+      <div class="msg success" id="signup-success"><i class="ti ti-circle-check"></i><span id="signup-success-text"></span></div>
+
+      <div class="form-group">
+        <label class="form-label" for="signup-name">Name</label>
+        <div class="input-wrap">
+          <input type="text" id="signup-name" placeholder="Your name" autocomplete="name" />
+          <i class="ti ti-user input-icon"></i>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="signup-email">Email</label>
+        <div class="input-wrap">
+          <input type="email" id="signup-email" placeholder="you@example.com" autocomplete="email" />
+          <i class="ti ti-mail input-icon"></i>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="signup-password">Password</label>
+        <div class="input-wrap">
+          <input type="password" id="signup-password" placeholder="Min. 6 characters" class="has-toggle" autocomplete="new-password" />
+          <i class="ti ti-lock input-icon"></i>
+          <button class="pw-toggle" type="button" onclick="togglePw('signup-password', this)" tabindex="-1">
+            <i class="ti ti-eye-off"></i>
+          </button>
+        </div>
+      </div>
+
+      <button class="submit-btn" id="signup-btn" onclick="handleSignup()">
+        <i class="ti ti-user-plus"></i> Create account
+      </button>
+    </div>
+
+  </div><!-- /card -->
+
+  <div class="footer-note" id="footer-hint">
+    Don't have an account? <a onclick="switchTab('signup')">Sign up free</a>
+  </div>
+
+</div><!-- /wrapper -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://localhost:7003';
+
+/* ── Tab switching ── */
+function switchTab(tab) {
+  ['login','signup'].forEach(t => {
+    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
+    document.getElementById('panel-' + t).classList.toggle('active', t === tab);
+  });
+
+  // Update footer hint
+  const hint = document.getElementById('footer-hint');
+  if (tab === 'login') {
+    hint.innerHTML = `Don't have an account? <a onclick="switchTab('signup')">Sign up free</a>`;
+  } else {
+    hint.innerHTML = `Already have an account? <a onclick="switchTab('login')">Sign in</a>`;
+  }
+
+  clearMessages();
+}
+
+function clearMessages() {
+  ['login-error','login-success','signup-error','signup-success'].forEach(id => {
+    document.getElementById(id).classList.remove('show');
+  });
+}
+
+/* ── Password visibility toggle ── */
+function togglePw(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const icon = btn.querySelector('i');
+  const isHidden = input.type === 'password';
+  input.type = isHidden ? 'text' : 'password';
+  icon.className = isHidden ? 'ti ti-eye' : 'ti ti-eye-off';
+}
+
+/* ── Show / hide message ── */
+function showMsg(id, text) {
+  const el = document.getElementById(id);
+  document.getElementById(id + '-text').textContent = text;
+  el.classList.add('show');
+}
+
+function hideMsg(id) {
+  document.getElementById(id).classList.remove('show');
+}
+
+/* ── Loading state ── */
+function setLoading(btnId, loading, label, icon) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = loading;
+  btn.innerHTML = loading
+    ? '<span class="spinner"></span>'
+    : `<i class="ti ti-${icon}"></i> ${label}`;
+}
+
+/* ── Enter key support ── */
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter') return;
+  if (document.getElementById('panel-login').classList.contains('active')) handleLogin();
+  else handleSignup();
+});
+
+/* ── LOGIN ── */
+async function handleLogin() {
+  clearMessages();
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+
+  if (!email || !password) {
+    showMsg('login-error', 'Please fill in all fields.');
+    return;
+  }
+
+  setLoading('login-btn', true);
+  try {
+    const res  = await fetch(API + '/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showMsg('login-error', data.message || 'Login failed.');
+    } else {
+      // Store token
+      localStorage.setItem('notes_token', data.token);
+      showMsg('login-success', 'Signed in! Redirecting…');
+      setTimeout(() => {
+        window.location.href = 'index.html';
+      }, 900);
+    }
+  } catch (err) {
+    showMsg('login-error', 'Cannot reach server. Is it running?');
+  } finally {
+    setLoading('login-btn', false, 'Sign in', 'login');
+  }
+}
+
+/* ── SIGNUP ── */
+async function handleSignup() {
+  clearMessages();
+  const name     = document.getElementById('signup-name').value.trim();
+  const email    = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
+
+  if (!name || !email || !password) {
+    showMsg('signup-error', 'Please fill in all fields.');
+    return;
+  }
+
+  if (password.length < 6) {
+    showMsg('signup-error', 'Password must be at least 6 characters.');
+    return;
+  }
+
+  setLoading('signup-btn', true);
+  try {
+    const res  = await fetch(API + '/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      showMsg('signup-error', data.message || 'Signup failed.');
+    } else {
+        showMsg('signup-success', 'Account created! Signing you in…');
+        const loginRes = await fetch(API + '/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const loginData = await loginRes.json();
+        localStorage.setItem('notes_token', loginData.token);
+        setTimeout(() => window.location.href = 'index.html', 900);
+     }
+  } catch (err) {
+    showMsg('signup-error', 'Cannot reach server. Is it running?');
+  } finally {
+    setLoading('signup-btn', false, 'Create account', 'user-plus');
+  }
+}
+</script>
+</body>
+</html>

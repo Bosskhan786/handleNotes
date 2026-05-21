@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Notes App</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <link rel="stylesheet" href="css/stylesIndex.css">
+</head>
+<body>
+<div class="app" id="app">
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-title"><i class="ti ti-notebook"></i> Notes</span>
+      <div style="display:flex;gap:5px;align-items:center">
+        <button class="plus-btn" onclick="showNew()" title="New note"><i class="ti ti-plus"></i></button>
+        <button class="plus-btn" onclick="logout()" title="Sign out" style="color:#c07070;border-color:#3d1f1f"><i class="ti ti-logout"></i></button>
+      </div>
+    </div>
+    <div id="conn-status"><span class="status-dot" id="dot"></span><span id="conn-text">Connecting…</span></div>
+    <div class="search-wrap">
+      <input type="text" placeholder="Search notes…" id="search-input" oninput="filterNotes()" />
+    </div>
+    <div class="notes-list" id="notes-list">
+      <div class="empty-state" style="height:200px"><div class="spinner"></div></div>
+    </div>
+  </div>
+  <div class="main" id="main">
+    <div class="content-area" id="content">
+      <div class="empty-state">
+        <i class="ti ti-notes"></i>
+        <p>Select a note or create one</p>
+        <button onclick="showNew()"><i class="ti ti-plus"></i> New note</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'http://localhost:7003';
+let notes = [];
+let activeId = null;
+
+function getToken() {
+  return localStorage.getItem('notes_token');
+}
+
+function authHeaders(extra = {}) {
+  return { 'Authorization': 'Bearer ' + getToken(), ...extra };
+}
+
+// Redirect to auth if not logged in
+if (!getToken()) window.location.href = 'auth.html';
+
+function setConnStatus(online) {
+  document.getElementById('dot').className = 'status-dot ' + (online ? 'online' : 'offline');
+  document.getElementById('conn-text').textContent = online ? 'Connected' : 'Cannot reach server';
+}
+
+async function fetchNotes() {
+  try {
+    const res = await fetch(API + '/notes', { headers: authHeaders() });
+    if (!res.ok) throw new Error();
+    notes = await res.json();
+    setConnStatus(true);
+    renderList();
+  } catch(e) {
+    setConnStatus(false);
+    notes = [];
+    renderList();
+  }
+}
+
+function filterNotes() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const filtered = notes.filter(n =>
+    n.title.toLowerCase().includes(q) ||
+    n.content.toLowerCase().includes(q) ||
+    (n.category||'').toLowerCase().includes(q)
+  );
+  renderList(filtered);
+}
+
+function catColor(cat) {
+  const map = {
+    work:      ['#0C447C','#0e1e2e'],
+    personal:  ['#27500A','#0e1e0a'],
+    ideas:     ['#8a6020','#1e1800'],
+    important: ['#791F1F','#1e0a0a'],
+    study:     ['#1a5a5a','#0a1e1e'],
+    metabolism:['#5a2070','#1a0a2a'],
+  };
+  const c = (cat||'').toLowerCase();
+  for (const k in map) if (c.includes(k)) return map[k];
+  return ['#888', '#1a1a1a'];
+}
+
+function renderList(list) {
+  list = list !== undefined ? list : notes;
+  const el = document.getElementById('notes-list');
+  if (!list.length) {
+    el.innerHTML = '<div class="empty-state" style="height:200px;min-height:0"><i class="ti ti-note-off"></i><p style="font-size:13px">No notes yet</p></div>';
+    return;
+  }
+  el.innerHTML = list.map(n => {
+    const active = n._id === activeId ? ' active' : '';
+    const [tc, bc] = catColor(n.category);
+    return `<div class="note-item${active}" onclick="openNote('${esc(n._id)}')">
+      <div class="note-item-title">${esc(n.title)}</div>
+      <div class="note-item-preview">${esc((n.content||'').slice(0,55))}</div>
+      ${n.category ? `<span class="badge" style="background:${bc};color:${tc};border-color:${tc}33">${esc(n.category)}</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function openNote(id) {
+  activeId = id;
+  renderList();
+  const note = notes.find(n => n._id === id);
+  if (!note) return;
+  const [tc, bc] = catColor(note.category);
+  const date = note.updatedAt
+    ? new Date(note.updatedAt).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'})
+    : '';
+
+  document.getElementById('content').innerHTML = `
+    <div class="top-bar" style="width:100%;max-width:none;padding:12px 20px">
+      <div class="tab-bar">
+        <button class="tab active" id="tab-view" onclick="switchTab('view')">View</button>
+        <button class="tab" id="tab-edit" onclick="switchTab('edit')">Edit</button>
+      </div>
+      <div class="top-bar-actions">
+        <button class="danger" onclick="deleteNote('${esc(note.title)}','${esc(id)}')">
+          <i class="ti ti-trash"></i> Delete
+        </button>
+      </div>
+    </div>
+
+    <div id="view-panel" style="width:100%;max-width:780px;padding:0 4px">
+      <div class="note-card">
+        <h1 class="view-title">${esc(note.title)}</h1>
+        <div class="note-meta">
+          ${note.category ? `<span class="meta-badge" style="background:${bc};color:${tc};border-color:${tc}44">${esc(note.category)}</span>` : ''}
+          ${date ? `<span class="meta-date"><i class="ti ti-clock" style="font-size:12px"></i> ${date}</span>` : ''}
+        </div>
+        <div class="view-content">${esc(note.content)}</div>
+      </div>
+    </div>
+    <div id="edit-panel" style="display:none;padding:0 4px;width:100%;max-width:780px">
+      <div class="form-group">
+        <label class="form-label">Title</label>
+        <input id="e-title" value="${esc(note.title)}" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <input id="e-cat" value="${esc(note.category||'')}" placeholder="e.g. Work, Personal…" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Content</label>
+        <textarea id="e-content">${esc(note.content)}</textarea>
+      </div>
+      <button class="primary" onclick="saveEdit('${esc(note.title)}')">
+        <i class="ti ti-device-floppy"></i> Save changes
+      </button>
+    </div>
+
+  `;
+}
+
+function switchTab(t) {
+  document.getElementById('tab-view').classList.toggle('active', t === 'view');
+  document.getElementById('tab-edit').classList.toggle('active', t === 'edit');
+  document.getElementById('view-panel').style.display = t === 'view' ? '' : 'none';
+  document.getElementById('edit-panel').style.display = t === 'edit' ? '' : 'none';
+}
+
+function showNew() {
+  activeId = null;
+  renderList();
+  document.getElementById('content').innerHTML = `
+    <div class="new-note-wrap">
+      <h2>New note</h2>
+      <div class="form-group">
+        <label class="form-label">Title *</label>
+        <input id="n-title" placeholder="Note title" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <input id="n-cat" placeholder="e.g. Work, Personal, Ideas…" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Content *</label>
+        <textarea id="n-content" placeholder="Write your note here…"></textarea>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="primary" onclick="createNote()"><i class="ti ti-plus"></i> Create note</button>
+        <button onclick="showEmpty()">Cancel</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('n-title').focus();
+}
+
+function showEmpty() {
+  activeId = null;
+  renderList();
+  document.getElementById('content').innerHTML = `
+    <div class="empty-state">
+      <i class="ti ti-notes"></i>
+      <p>Select a note or create one</p>
+      <button onclick="showNew()"><i class="ti ti-plus"></i> New note</button>
+    </div>`;
+}
+
+async function createNote() {
+  const title    = document.getElementById('n-title').value.trim();
+  const content  = document.getElementById('n-content').value.trim();
+  const category = document.getElementById('n-cat').value.trim() || 'General';
+  if (!title || !content) { showToast('Title and content are required'); return; }
+  try {
+    const res = await fetch(API + '/notes', {
+      method: 'POST',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ title, content, category })
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.msg || data.error || 'Error creating note'); return; }
+    showToast('Note created ✓');
+    await fetchNotes();
+    openNote(data._id);
+  } catch(e) { showToast('Cannot reach server'); }
+}
+
+async function saveEdit(origTitle) {
+  const title    = document.getElementById('e-title').value.trim();
+  const content  = document.getElementById('e-content').value.trim();
+  const category = document.getElementById('e-cat').value.trim() || 'General';
+  if (!title || !content) { showToast('Title and content are required'); return; }
+  try {
+    const res = await fetch(`${API}/notes/${encodeURIComponent(origTitle)}`, {
+      method: 'PATCH',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ title, content, category })
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error || 'Error updating note'); return; }
+    showToast('Saved ✓');
+    await fetchNotes();
+    const updated = notes.find(n => n.title === title);
+    if (updated) openNote(updated._id);
+  } catch(e) { showToast('Cannot reach server'); }
+}
+
+async function deleteNote(title, id) {
+  if (!confirm(`Delete "${title}"?`)) return;
+  try {
+    const res = await fetch(`${API}/notes/${encodeURIComponent(title)}`, { method: 'DELETE', headers: authHeaders() });
+    if (!res.ok) { const d = await res.json(); showToast(d.error || 'Error deleting note'); return; }
+    showToast('Note deleted');
+    activeId = null;
+    await fetchNotes();
+    showEmpty();
+  } catch(e) { showToast('Cannot reach server'); }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function logout() {
+  localStorage.removeItem('notes_token');
+  window.location.href = 'auth.html';
+}
+
+fetchNotes();
+</script>
+</body>
+</html>
