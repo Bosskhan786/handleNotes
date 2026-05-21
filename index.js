@@ -28,4 +28,4 @@ app.use(cors());
 app.use("/notes", noteRouter);
 app.use("/", userRouter);
 
-app.listen(PORT, () => console.log("Server started at PORT:", PORT));
+module.exports = app;
