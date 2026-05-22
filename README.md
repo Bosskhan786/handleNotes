@@ -53,14 +53,13 @@ handle-notes/
 │   ├── routes/
 │   ├── models/
 │   ├── middleware/
-│   ├── db.js
+│   ├── connections.js
 │   └── index.js
 │
-├── src/
-│   ├── components/
-│   ├── context/
-│   ├── App.js
-│   └── index.js
+├── frontend/
+│   ├── css/
+│   ├── index.html
+│   └── auth.html
 │
 └── README.md
 ```
@@ -74,14 +73,3 @@ handle-notes/
 3. JWT token is generated on login
 4. Protected routes verify token before access
 5. User can securely manage personal notes
-
----
-
-# 🌟 Future Improvements
-
-- 📌 Pin Important Notes
-- 🎨 Dark Mode
-- 🏷️ Tags & Categories
-- 🔍 Search Functionality
-- 📱 Mobile App Version
-- 🤖 AI Note Summarization
