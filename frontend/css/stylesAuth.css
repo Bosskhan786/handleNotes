@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
@@ -21,14 +23,14 @@ body {
   color: var(--text);
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
-  zoom: 1.1;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
-/* Subtle background texture */
 body::before {
   content: '';
   position: fixed;
@@ -40,7 +42,6 @@ body::before {
   z-index: 0;
 }
 
-/* Faint grid lines */
 body::after {
   content: '';
   position: fixed;
@@ -57,10 +58,9 @@ body::after {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 380px;
-  padding: 24px;
+  max-width: 420px;
+  padding: 28px 28px 48px;
   animation: fadeUp 0.4s ease both;
-  padding-bottom: 60px;
 }
 
 @keyframes fadeUp {
@@ -72,26 +72,26 @@ body::after {
 .brand {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 36px;
+  gap: 10px;
+  margin-bottom: 40px;
 }
 
 .brand-icon {
-  width: 30px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   background: var(--text);
-  border-radius: 7px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #111;
-  font-size: 15px;
+  font-size: 17px;
   flex-shrink: 0;
 }
 
 .brand-name {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 400;
   color: var(--text);
   letter-spacing: -0.02em;
@@ -101,8 +101,8 @@ body::after {
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 28px 28px 24px;
+  border-radius: 16px;
+  padding: 32px 32px 28px;
   box-shadow: 0 2px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.02);
 }
 
@@ -112,24 +112,25 @@ body::after {
   gap: 3px;
   background: #111;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 9px;
   padding: 3px;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
 .tab-btn {
   flex: 1;
-  padding: 6px 0;
-  font-size: 12.5px;
+  padding: 8px 0;
+  font-size: 14px;
   font-family: inherit;
   font-weight: 500;
   border: none;
   background: transparent;
   color: var(--text-dim);
-  border-radius: 6px;
+  border-radius: 7px;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
   letter-spacing: -0.01em;
+  min-height: 40px;
 }
 
 .tab-btn.active {
@@ -143,61 +144,60 @@ body::after {
 /* ── Headings ── */
 .form-title {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 400;
   color: var(--text);
-  margin-bottom: 4px;
+  margin-bottom: 5px;
   letter-spacing: -0.02em;
   line-height: 1.2;
 }
 
 .form-subtitle {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-muted);
-  margin-bottom: 22px;
+  margin-bottom: 26px;
   line-height: 1.5;
 }
 
 /* ── Form ── */
-.form-group { margin-bottom: 13px; }
+.form-group { margin-bottom: 15px; }
 
 .form-label {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9.5px;
+  font-size: 10px;
   font-weight: 500;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.07em;
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 6px;
 }
 
-.input-wrap {
-  position: relative;
-}
+.input-wrap { position: relative; }
 
 .input-wrap .input-icon {
   position: absolute;
-  left: 10px;
+  left: 11px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 16px;
   pointer-events: none;
   transition: color 0.15s;
 }
 
 input {
   width: 100%;
-  border-radius: 7px;
+  border-radius: 8px;
   border: 1px solid var(--border);
-  padding: 8px 12px 8px 32px;
-  font-size: 13px;
+  padding: 11px 14px 11px 36px;
+  font-size: 16px; /* keeps iOS from zooming */
   font-family: inherit;
   background: #111;
   color: var(--text);
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
+  -webkit-appearance: none;
 }
 
 input::placeholder { color: var(--text-muted); }
@@ -207,139 +207,112 @@ input:focus {
   box-shadow: 0 0 0 3px rgba(255,255,255,0.04);
 }
 
-input:focus + .input-icon,
-.input-wrap:focus-within .input-icon {
-  color: var(--text-dim);
-}
+.input-wrap:focus-within .input-icon { color: var(--text-dim); }
 
 /* password toggle */
 .pw-toggle {
   position: absolute;
-  right: 9px;
+  right: 10px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
-  padding: 3px;
+  padding: 6px;
   color: var(--text-muted);
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
   display: flex;
   align-items: center;
   line-height: 1;
   transition: color 0.15s;
+  min-width: 36px;
+  min-height: 36px;
+  justify-content: center;
 }
 .pw-toggle:hover { color: var(--text-dim); }
 
 input[type="password"],
-input.has-toggle { padding-right: 34px; }
+input.has-toggle { padding-right: 44px; }
 
 /* ── Submit ── */
 .submit-btn {
   width: 100%;
-  margin-top: 6px;
-  padding: 9px 12px;
-  font-size: 13px;
+  margin-top: 8px;
+  padding: 13px 14px;
+  font-size: 15px;
   font-family: inherit;
   font-weight: 600;
   letter-spacing: -0.01em;
   background: var(--text);
   color: #111;
   border: 1px solid var(--text);
-  border-radius: 7px;
+  border-radius: 8px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 7px;
   transition: background 0.12s, border-color 0.12s, opacity 0.12s;
+  -webkit-appearance: none;
+  touch-action: manipulation;
 }
 
 .submit-btn:hover:not(:disabled) { background: #d0cdc5; border-color: #d0cdc5; }
 .submit-btn:disabled { opacity: 0.4; cursor: default; }
 
-/* ── Error / success messages ── */
+/* ── Messages ── */
 .msg {
-  font-size: 12px;
-  padding: 9px 12px;
-  border-radius: 7px;
-  margin-bottom: 14px;
+  font-size: 13px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
   display: none;
   align-items: center;
-  gap: 7px;
+  gap: 8px;
   line-height: 1.4;
 }
 
-.msg.error {
-  background: var(--danger-bg);
-  border: 1px solid #3d1f1f;
-  color: #c07070;
-}
-
-.msg.success {
-  background: #0e1e0a;
-  border: 1px solid #27500a55;
-  color: #7ab860;
-}
-
-.msg.show { display: flex; }
+.msg.error   { background: var(--danger-bg); border: 1px solid #3d1f1f; color: #c07070; }
+.msg.success { background: #0e1e0a; border: 1px solid #27500a55; color: #7ab860; }
+.msg.show    { display: flex; }
 
 /* ── Divider ── */
 .divider {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 18px 0 16px;
+  margin: 20px 0 18px;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
 }
+.divider::before, .divider::after { content:''; flex:1; height:1px; background:var(--border); }
 
-.divider::before, .divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--border);
-}
-
-/* ── Footer note ── */
+/* ── Footer ── */
 .footer-note {
   text-align: center;
-  font-size: 11.5px;
+  font-size: 13px;
   color: var(--text-muted);
-  margin-top: 16px;
+  margin-top: 18px;
   line-height: 1.5;
 }
-
-.footer-note a {
-  color: var(--text-dim);
-  text-decoration: none;
-  cursor: pointer;
-  transition: color 0.15s;
-}
-
+.footer-note a { color: var(--text-dim); text-decoration: none; cursor: pointer; transition: color 0.15s; }
 .footer-note a:hover { color: var(--text); }
 
 /* ── Spinner ── */
 .spinner {
   display: inline-block;
-  width: 13px;
-  height: 13px;
+  width: 15px;
+  height: 15px;
   border: 2px solid rgba(0,0,0,0.2);
   border-top-color: #111;
   border-radius: 50%;
   animation: spin 0.65s linear infinite;
 }
-
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Panel transitions ── */
-.panel {
-  display: none;
-  animation: fadeIn 0.2s ease both;
-}
-
+/* ── Panels ── */
+.panel { display: none; animation: fadeIn 0.2s ease both; }
 .panel.active { display: block; }
-
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -352,9 +325,9 @@ input.has-toggle { padding-right: 34px; }
   right: 20px;
   background: var(--text);
   color: #111;
-  padding: 9px 14px;
-  border-radius: 6px;
-  font-size: 12px;
+  padding: 10px 16px;
+  border-radius: 7px;
+  font-size: 13px;
   font-weight: 500;
   opacity: 0;
   transition: opacity 0.2s, transform 0.2s;
@@ -362,5 +335,38 @@ input.has-toggle { padding-right: 34px; }
   z-index: 999;
   pointer-events: none;
 }
-
 .toast.show { opacity: 1; transform: translateY(0); }
+
+/* ══════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════ */
+
+/* Mobile ≤ 600px */
+@media (max-width: 600px) {
+  body {
+    align-items: flex-start;
+    padding-top: max(env(safe-area-inset-top), 16px);
+    padding-bottom: max(env(safe-area-inset-bottom), 16px);
+  }
+
+  .wrapper {
+    max-width: 100%;
+    padding: 20px 16px 40px;
+  }
+
+  .card { padding: 24px 20px 20px; border-radius: 14px; }
+  .form-title { font-size: 24px; }
+  .brand { margin-bottom: 28px; }
+
+  .toast { left: 12px; right: 12px; bottom: 12px; text-align: center; }
+}
+
+/* Tablet 601–900px */
+@media (min-width: 601px) and (max-width: 900px) {
+  .wrapper { max-width: 460px; }
+}
+
+/* Desktop ≥ 901px — keep the comfortable 420px card */
+@media (min-width: 901px) {
+  .wrapper { max-width: 420px; }
+}

@@ -8,13 +8,21 @@
   <link rel="stylesheet" href="css/stylesIndex.css">
 </head>
 <body>
+
+<!-- Sidebar backdrop overlay (mobile) -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
 <div class="app" id="app">
-  <div class="sidebar">
+
+  <!-- ── Sidebar ── -->
+  <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <span class="sidebar-title"><i class="ti ti-notebook"></i> Notes</span>
       <div style="display:flex;gap:5px;align-items:center">
         <button class="plus-btn" onclick="showNew()" title="New note"><i class="ti ti-plus"></i></button>
         <button class="plus-btn" onclick="logout()" title="Sign out" style="color:#c07070;border-color:#3d1f1f"><i class="ti ti-logout"></i></button>
+        <!-- Close button — mobile only -->
+        <button class="sidebar-close-btn" id="sidebar-close" title="Close menu"><i class="ti ti-x"></i></button>
       </div>
     </div>
     <div id="conn-status"><span class="status-dot" id="dot"></span><span id="conn-text">Connecting…</span></div>
@@ -25,6 +33,8 @@
       <div class="empty-state" style="height:200px"><div class="spinner"></div></div>
     </div>
   </div>
+
+  <!-- ── Main ── -->
   <div class="main" id="main">
     <div class="content-area" id="content">
       <div class="empty-state">
@@ -34,30 +44,41 @@
       </div>
     </div>
   </div>
-</div>
+
+</div><!-- /app -->
+
 <div class="toast" id="toast"></div>
 
 <script>
 const API = 'https://handlenotes.onrender.com';
-let notes = [];
+let notes   = [];
 let activeId = null;
 
-function getToken() {
-  return localStorage.getItem('notes_token');
-}
-
+function getToken()  { return localStorage.getItem('notes_token'); }
 function authHeaders(extra = {}) {
   return { 'Authorization': 'Bearer ' + getToken(), ...extra };
 }
 
-// Redirect to auth if not logged in
 if (!getToken()) window.location.href = 'auth.html';
 
+/* ── Mobile sidebar ── */
+const sidebar        = document.getElementById('sidebar');
+const sidebarOverlay = document.getElementById('sidebar-overlay');
+const sidebarClose   = document.getElementById('sidebar-close');
+
+function openSidebar()  { sidebar.classList.add('open'); sidebarOverlay.classList.add('show'); }
+function closeSidebar() { sidebar.classList.remove('open'); sidebarOverlay.classList.remove('show'); }
+
+sidebarOverlay.addEventListener('click', closeSidebar);
+sidebarClose.addEventListener('click',   closeSidebar);
+
+/* ── Connection status ── */
 function setConnStatus(online) {
-  document.getElementById('dot').className = 'status-dot ' + (online ? 'online' : 'offline');
+  document.getElementById('dot').className     = 'status-dot ' + (online ? 'online' : 'offline');
   document.getElementById('conn-text').textContent = online ? 'Connected' : 'Cannot reach server';
 }
 
+/* ── Fetch notes ── */
 async function fetchNotes() {
   try {
     const res = await fetch(API + '/notes', { headers: authHeaders() });
@@ -72,6 +93,7 @@ async function fetchNotes() {
   }
 }
 
+/* ── Filter ── */
 function filterNotes() {
   const q = document.getElementById('search-input').value.toLowerCase();
   const filtered = notes.filter(n =>
@@ -82,6 +104,7 @@ function filterNotes() {
   renderList(filtered);
 }
 
+/* ── Category colours ── */
 function catColor(cat) {
   const map = {
     work:      ['#0C447C','#0e1e2e'],
@@ -89,23 +112,23 @@ function catColor(cat) {
     ideas:     ['#8a6020','#1e1800'],
     important: ['#791F1F','#1e0a0a'],
     study:     ['#1a5a5a','#0a1e1e'],
-    metabolism:['#5a2070','#1a0a2a'],
   };
   const c = (cat||'').toLowerCase();
   for (const k in map) if (c.includes(k)) return map[k];
-  return ['#888', '#1a1a1a'];
+  return ['#888','#1a1a1a'];
 }
 
+/* ── Render list ── */
 function renderList(list) {
   list = list !== undefined ? list : notes;
   const el = document.getElementById('notes-list');
   if (!list.length) {
-    el.innerHTML = '<div class="empty-state" style="height:200px;min-height:0"><i class="ti ti-note-off"></i><p style="font-size:13px">No notes yet</p></div>';
+    el.innerHTML = '<div class="empty-state" style="height:200px;min-height:0"><i class="ti ti-note-off"></i><p>No notes yet</p></div>';
     return;
   }
   el.innerHTML = list.map(n => {
-    const active = n._id === activeId ? ' active' : '';
-    const [tc, bc] = catColor(n.category);
+    const active    = n._id === activeId ? ' active' : '';
+    const [tc, bc]  = catColor(n.category);
     return `<div class="note-item${active}" onclick="openNote('${esc(n._id)}')">
       <div class="note-item-title">${esc(n.title)}</div>
       <div class="note-item-preview">${esc((n.content||'').slice(0,55))}</div>
@@ -116,15 +139,15 @@ function renderList(list) {
 
 function esc(s) {
   return String(s)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;');
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+/* ── Open note ── */
 function openNote(id) {
   activeId = id;
   renderList();
+  closeSidebar(); // auto-close drawer on mobile after selecting
   const note = notes.find(n => n._id === id);
   if (!note) return;
   const [tc, bc] = catColor(note.category);
@@ -134,13 +157,17 @@ function openNote(id) {
 
   document.getElementById('content').innerHTML = `
     <div class="top-bar" style="width:100%;max-width:none;padding:12px 20px">
-      <div class="tab-bar">
-        <button class="tab active" id="tab-view" onclick="switchTab('view')">View</button>
-        <button class="tab" id="tab-edit" onclick="switchTab('edit')">Edit</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <!-- Hamburger — injected for mobile -->
+        <button class="menu-btn" onclick="openSidebar()" style="display:none" id="inner-menu-btn"><i class="ti ti-menu-2"></i></button>
+        <div class="tab-bar">
+          <button class="tab active" id="tab-view" onclick="switchTab('view')">View</button>
+          <button class="tab"        id="tab-edit" onclick="switchTab('edit')">Edit</button>
+        </div>
       </div>
       <div class="top-bar-actions">
         <button class="danger" onclick="deleteNote('${esc(note.title)}','${esc(id)}')">
-          <i class="ti ti-trash"></i> Delete
+          <i class="ti ti-trash"></i> <span class="btn-label">Delete</span>
         </button>
       </div>
     </div>
@@ -150,11 +177,12 @@ function openNote(id) {
         <h1 class="view-title">${esc(note.title)}</h1>
         <div class="note-meta">
           ${note.category ? `<span class="meta-badge" style="background:${bc};color:${tc};border-color:${tc}44">${esc(note.category)}</span>` : ''}
-          ${date ? `<span class="meta-date"><i class="ti ti-clock" style="font-size:12px"></i> ${date}</span>` : ''}
+          ${date ? `<span class="meta-date"><i class="ti ti-clock" style="font-size:13px"></i> ${date}</span>` : ''}
         </div>
         <div class="view-content">${esc(note.content)}</div>
       </div>
     </div>
+
     <div id="edit-panel" style="display:none;padding:0 4px;width:100%;max-width:780px">
       <div class="form-group">
         <label class="form-label">Title</label>
@@ -172,10 +200,20 @@ function openNote(id) {
         <i class="ti ti-device-floppy"></i> Save changes
       </button>
     </div>
-
   `;
+
+  // show hamburger inside content on mobile
+  showInnerMenuBtn();
 }
 
+/* Show the inner hamburger button when viewport is mobile */
+function showInnerMenuBtn() {
+  const btn = document.getElementById('inner-menu-btn');
+  if (btn && window.innerWidth <= 700) btn.style.display = 'inline-flex';
+}
+window.addEventListener('resize', showInnerMenuBtn);
+
+/* ── Tab switch (view / edit) ── */
 function switchTab(t) {
   document.getElementById('tab-view').classList.toggle('active', t === 'view');
   document.getElementById('tab-edit').classList.toggle('active', t === 'edit');
@@ -183,9 +221,11 @@ function switchTab(t) {
   document.getElementById('edit-panel').style.display = t === 'edit' ? '' : 'none';
 }
 
+/* ── New note ── */
 function showNew() {
   activeId = null;
   renderList();
+  closeSidebar();
   document.getElementById('content').innerHTML = `
     <div class="new-note-wrap">
       <h2>New note</h2>
@@ -201,7 +241,7 @@ function showNew() {
         <label class="form-label">Content *</label>
         <textarea id="n-content" placeholder="Write your note here…"></textarea>
       </div>
-      <div style="display:flex;gap:8px">
+      <div style="display:flex;gap:9px;flex-wrap:wrap">
         <button class="primary" onclick="createNote()"><i class="ti ti-plus"></i> Create note</button>
         <button onclick="showEmpty()">Cancel</button>
       </div>
@@ -221,13 +261,14 @@ function showEmpty() {
     </div>`;
 }
 
+/* ── Create ── */
 async function createNote() {
   const title    = document.getElementById('n-title').value.trim();
   const content  = document.getElementById('n-content').value.trim();
   const category = document.getElementById('n-cat').value.trim() || 'General';
   if (!title || !content) { showToast('Title and content are required'); return; }
   try {
-    const res = await fetch(API + '/notes', {
+    const res  = await fetch(API + '/notes', {
       method: 'POST',
       headers: authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ title, content, category })
@@ -240,13 +281,14 @@ async function createNote() {
   } catch(e) { showToast('Cannot reach server'); }
 }
 
+/* ── Save edit ── */
 async function saveEdit(origTitle) {
   const title    = document.getElementById('e-title').value.trim();
   const content  = document.getElementById('e-content').value.trim();
   const category = document.getElementById('e-cat').value.trim() || 'General';
   if (!title || !content) { showToast('Title and content are required'); return; }
   try {
-    const res = await fetch(`${API}/notes/${encodeURIComponent(origTitle)}`, {
+    const res  = await fetch(`${API}/notes/${encodeURIComponent(origTitle)}`, {
       method: 'PATCH',
       headers: authHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({ title, content, category })
@@ -260,6 +302,7 @@ async function saveEdit(origTitle) {
   } catch(e) { showToast('Cannot reach server'); }
 }
 
+/* ── Delete ── */
 async function deleteNote(title, id) {
   if (!confirm(`Delete "${title}"?`)) return;
   try {
@@ -272,6 +315,7 @@ async function deleteNote(title, id) {
   } catch(e) { showToast('Cannot reach server'); }
 }
 
+/* ── Toast ── */
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -279,6 +323,7 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 
+/* ── Logout ── */
 function logout() {
   localStorage.removeItem('notes_token');
   window.location.href = 'auth.html';
